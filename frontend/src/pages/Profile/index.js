@@ -1,69 +1,81 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, {useEffect , useState} from 'react';
+import { Link, useHistory } from 'react-router-dom';
 import { FiPower, FiTrash2 } from 'react-icons/fi';
-import './styles.css'
-
+import './styles.css';
 import logoImg from '../../assets/logo.svg';
+import api from '../../service/api';
 
 export default function Profile() {
-    return (
-        <div className="profile-container">
-            <header>
-                <img src={logoImg} alt="Be the Hero" />
-                <span>Bem Vindo</span>
+    const[incidents, setIncidents] = useState([]);
 
-                <Link className="button" to="incidents/new">Cadastrar novo caso</Link>
-                <button type="button">
-                    <FiPower size={18} color="#E02041" />
-                </button>
-            </header>
+    const ongId = localStorage.getItem('ongId');
+    const ongName = localStorage.getItem('ongName');
+
+    const  history = useHistory()
+    
+    useEffect(() =>{
+        api.get('/profile',{
+            headers:{
+                Authorization:ongId,
+            }
+        }).then(response =>{
+            setIncidents(response.data);
+        });
+    }, [ongId]);
+
+    async function handleDeleteIncident (id){
+        try{
+            await api.delete(`incidents/${id}`,{
+                headers:{
+                    Authorization: ongId,
+                }
+            });
+            setIncidents(incidents.filter(incident=> incident.id !== id));
+        }catch(err){
+            alert('Erro ao deletar o caso , tente novamente')
+        }
+    }
+
+    function handleLogout(){
+        localStorage.clear();
+        history.push ('/');
+    }
+
+    return (
+    <div className="profile-container">
+      <header>
+        <img src={logoImg} alt="Be The Hero" />
+        <span>Bem vinda, {ongName}</span>
+
+        <Link to="/incidents/new" className="button">
+          Cadastrar novo caso
+        </Link>
+
+        <button type="button" onClick={handleLogout}>
+          <FiPower size={18} color="#e02041" />
+        </button>
+      </header>
             <h1>Casos cadastrado</h1>
             <ul>
 
-                <li>
+               {incidents.map(incident=>(
+                    <li key ={incident.id}>
                     <strong>Caso:</strong>
-                    <p>Caso Teste </p>
+                    <p>{incident.title} </p>
+
                     <strong>DESCRIÇÃO:</strong>
-                    <p>Descrição teste</p>
+                    <p>{incident.description} </p>
+
                     <strong>VALOR:</strong>
-                    <p>R$ 120,00</p>
-                    <button type="button">
+                    <p>{Intl.NumberFormat('pt-br', {style:'currency'
+                , currency :'BRL'
+                }).format(incident.value)} </p>
+
+                    <button onClick={()=>handleDeleteIncident(incident.id)} type="button">
                         <FiTrash2 size={20} color="#a8a8b3" />
                     </button>
-                </li>
-                <li>
-                    <strong>Caso:</strong>
-                    <p>Caso Teste </p>
-                    <strong>DESCRIÇÃO:</strong>
-                    <p>Descrição teste</p>
-                    <strong>VALOR:</strong>
-                    <p>R$ 120,00</p>
-                    <button type="button">
-                        <FiTrash2 size={20} color="#a8a8b3" />
-                    </button>
-                </li>
-                <li>
-                    <strong>Caso:</strong>
-                    <p>Caso Teste </p>
-                    <strong>DESCRIÇÃO:</strong>
-                    <p>Descrição teste</p>
-                    <strong>VALOR:</strong>
-                    <p>R$ 120,00</p>
-                    <button type="button">
-                        <FiTrash2 size={20} color="#a8a8b3" />
-                    </button>
-                </li>
-                <li>
-                    <strong>Caso:</strong>
-                    <p>Caso Teste </p>
-                    <strong>DESCRIÇÃO:</strong>
-                    <p>Descrição teste</p>
-                    <strong>VALOR:</strong>
-                    <p>R$ 120,00</p>
-                    <button type="button">
-                        <FiTrash2 size={20} color="#a8a8b3" />
-                    </button>
-                </li>
+                </li>))}
+                
 
             </ul>
         </div>
